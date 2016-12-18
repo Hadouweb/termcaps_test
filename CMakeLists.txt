@@ -13,4 +13,4 @@ set(HEADERS
 
 add_executable(termcaps ${SRCS} ${HEADERS})
 
-target_link_libraries(termcaps ft)
+target_link_libraries(termcaps ft termcap)

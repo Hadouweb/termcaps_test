@@ -1,26 +1,5 @@
 #include "mytermcaps.h"
 
-int     voir_touche()
-{
-	char     buffer[3];
-
-	while (1)
-	{
-		read(0, buffer, 3);
-		if (buffer[0] == 27) {
-			TERM_FONT_BOLD;
-			printf("C'est une fleche !\n");
-			TERM_FONT_NORMAL;
-		}
-		else if (buffer[0] == 4)
-		{
-			printf("Ctlr+d, on quitte !\n");
-			return (0);
-		}
-	}
-	return (0);
-}
-
 void	debug_termios(struct termios *term) {
 	printf("- input flags :   [c_iflag] => %lu\n", term->c_iflag);
 	printf("- output flags :  [c_oflag] => %lu\n", term->c_oflag);
@@ -40,8 +19,7 @@ void	debug_termios(struct termios *term) {
 
 int		my_outc(int c)
 {
-	ft_putchar(c);
-	return (1);
+	return ((int)write(STDIN_FILENO, &c, 1));
 }
 
 void	print_term_size(void)
@@ -55,43 +33,131 @@ void	print_term_size(void)
 			size.ws_row,size.ws_col);
 }
 
-int		main(int ac, char **av, char **env)
+int 	move_up(char buffer[5])
 {
-	char           *name_term;
-	struct termios term;
-	struct termios old_term;
-	char    		*res;
-	char    		*res2;
+	if (ft_memcmp(buffer, KEY_UP, 5) == 0)
+	{
+		tputs(tgetstr("le", NULL), 0, my_outc);
+		return (1);
+	}
+	return (0);
+}
 
-	if (ac && av && env)
-		;
-	//print_term_size();
-	if ((name_term = getenv("TERM")) == NULL)
-		return (-1);
-	printf("%s\n", name_term);
-	if (tgetent(NULL,  name_term) == -1)
-		return (-1);
-	if (tcgetattr(0, &term) == -1)
-		return (-1);
-	memcpy(&old_term, &term, sizeof(struct termios));
-	debug_termios(&term);
-	term.c_lflag &= ~(ICANON); // Met le terminal en mode canonique.
-	term.c_lflag &= ~(ECHO); // les touches tapées ne s'inscriront plus dans le terminal
-	term.c_cc[VMIN] = 1;
-	term.c_cc[VTIME] = 0;
-	// On applique les changements :
-	if (tcsetattr(0, TCSADRAIN, &term) == -1)
-		return (-1);
-	debug_termios(&term);
+int 	move_down(char buffer[5])
+{
+	if (ft_memcmp(buffer, KEY_DOWN, 5) == 0)
+	{
+		tputs(tgetstr("nd", NULL), 0, my_outc);
+		return (1);
+	}
+	return (0);
+}
 
-	if ((res = tgetstr("cl", NULL)) == NULL)
-		return (-1);
-	//tputs(res, 0, my_outc);
+int 	move_right(char buffer[5])
+{
+	if (ft_memcmp(buffer, KEY_RIGHT, 5) == 0)
+	{
+		tputs(tgetstr("nd", NULL), 0, my_outc);
+		return (1);
+	}
+	return (0);
+}
 
-	res2 = tgetstr("cm", NULL);
-	//tputs(tgoto(res2, 0, 0), 1, my_outc);
-	voir_touche();
-	if (tcsetattr(0, TCSADRAIN, &old_term) == -1)
-		return (-1);
+int 	move_left(char buffer[5])
+{
+	if (ft_memcmp(buffer, KEY_LEFT, 5) == 0)
+	{
+		tputs(tgetstr("le", NULL), 0, my_outc);
+		return (1);
+	}
+	return (0);
+}
+
+int		exec_key(t_term *tc, char buffer[5])
+{
+	int 	i;
+
+	i = 0;
+	while (i < k_count)
+	{
+		if (tc->f[i](buffer) == 1)
+			return (1);
+		i++;
+	}
+	return (0);
+}
+
+int     read_key(t_term *tc)
+{
+	char    buffer[6];
+	int 	ret;
+	int 	s;
+
+	while (1)
+	{
+		s = read(0, buffer, 5);
+		buffer[s] = '\0';
+		ret = exec_key(tc, buffer);
+		if (ret == 0)
+			ft_putstr(buffer);
+	}
+	return (0);
+}
+
+void	error(char *str, int line)
+{
+	ft_putstr_fd("Error : ", 2);
+	ft_putstr_fd(str, 2);
+	ft_putstr_fd("at line : ", 2);
+	ft_putnbr_fd(line, 2);
+	ft_putstr_fd("\n", 2);
+	exit(1);
+}
+
+void	init_key(t_term *tc)
+{
+	tc->f[0] = move_up;
+	tc->f[1] = move_down;
+	tc->f[2] = move_right;
+	tc->f[3] = move_left;
+}
+
+void	init_term(t_term *tc)
+{
+	ft_bzero(tc, sizeof(t_term));
+	init_key(tc);
+	if ((tc->name_term = getenv("TERM")) == NULL)
+		error("getenv", __LINE__);
+	if (tgetent(NULL,  tc->name_term) == -1)
+		error("tgetent", __LINE__);
+	if (tcgetattr(STDIN_FILENO, &tc->term) == -1)
+		error("tcgetattr", __LINE__);
+	ft_memcpy(&tc->old_term, &tc->term, sizeof(struct termios));
+	tc->term.c_lflag &= ~(ICANON);
+	tc->term.c_lflag &= ~(ECHO);
+	tc->term.c_cc[VMIN] = 1;
+	tc->term.c_cc[VTIME] = 0;
+	if (tcsetattr(STDIN_FILENO, TCSANOW, &tc->term) == -1)
+		error("tcsetattr", __LINE__);
+	tputs(tgetstr("im", NULL), 0, my_outc);
+}
+
+void	reset_term(t_term *tc)
+{
+	tputs(tgetstr("ei", NULL), 1, my_outc);
+	if (tcsetattr(STDIN_FILENO, TCSANOW, &tc->old_term) == -1)
+		error("tcsetattr", __LINE__);
+}
+
+int		main(void)
+{
+	t_term		tc;
+
+	init_term(&tc);
+	//debug_termios(&tc.term);
+
+	read_key(&tc);
+
+	reset_term(&tc);
 	return (0);
 }

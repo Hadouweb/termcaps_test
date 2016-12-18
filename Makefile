@@ -9,7 +9,7 @@ LIBFTPATH = ./libft
 
 HEADER = -I $(LIBFTPATH)/includes -I $(INCPATH)
 
-LIB = -L$(LIBFTPATH) -lft -lncurses
+LIB = -L$(LIBFTPATH) -lft -ltermcap
 LIBNAME = $(LIBFTPATH)/libft.a
 
 SRC = 	$(SRCPATH)/main.c\

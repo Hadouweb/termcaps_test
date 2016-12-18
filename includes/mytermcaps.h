@@ -7,34 +7,31 @@
 #include <term.h>
 #include <sys/ioctl.h>
 
-/* efface l'ecran */
-#define TERM_CLEAR printf ("%c[H%c[J",27,27)
+# define KEY_UP				"\x1b\x5b\x41\x0\x0\x0"
+# define KEY_DOWN			"\x1b\x5b\x42\x0\x0\x0"
+# define KEY_RIGHT			"\x1b\x5b\x43\x0\x0\x0"
+# define KEY_LEFT			"\x1b\x5b\x44\x0\x0\x0"
 
-/* efface la ligne ou se trouve le curseur */
-#define TERM_CLEAR_LINE printf ("%c[J",27)
+enum e_key
+{
+	k_up,
+	k_down,
+	k_right,
+	k_left,
+	k_count,
+};
 
-/* place le curseur en haut a gauche */
-#define TERM_CURSOR_HOME printf ("%c[H",27)
+typedef struct 		s_term
+{
+	char 			*name_term;
+	struct termios 	term;
+	struct termios 	old_term;
+	int				(*f[k_count])(char buffer[5]);
+}					t_term;
 
-/* place le curseur a la position x,y (en ht/gche = 1,1)*/
-#define TERM_CURSOR_GOTO(x,y) printf ("%c[%d;%dH",27,(y),(x))
-
-/* sauve la position du curseur */
-#define TERM_CURSOR_SAVE printf ("%c7",27)
-
-/* positionne le curseur a la dernière position sauvée */
-#define TERM_CURSOR_RESTORE printf ("%c8",27)
-
-/* monte le curseur d'une ligne */
-#define TERM_CURSOR_UP printf ("%cA",27)
-
-/* passe en vidéo inverse */
-#define TERM_FONT_REVERSE printf("%c[5m",27)
-
-/* passe en bold ou surbrillance suivant le terminal */
-#define TERM_FONT_BOLD printf("%c[1m",27)
-
-/* annule l'effet de BOLD ou REVERSE */
-#define TERM_FONT_NORMAL printf("%c[m",27)
+int 	move_up(char buffer[5]);
+int 	move_down(char buffer[5]);
+int 	move_right(char buffer[5]);
+int 	move_left(char buffer[5]);
 
 #endif
