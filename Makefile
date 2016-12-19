@@ -13,6 +13,10 @@ LIB = -L$(LIBFTPATH) -lft -ltermcap
 LIBNAME = $(LIBFTPATH)/libft.a
 
 SRC = 	$(SRCPATH)/main.c\
+    	$(SRCPATH)/error.c\
+    	$(SRCPATH)/debug.c\
+    	$(SRCPATH)/key_func.c\
+    	$(SRCPATH)/util.c\
 
 OBJ = $(SRC:.c=.o)
 

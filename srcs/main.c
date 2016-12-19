@@ -1,125 +1,128 @@
 #include "mytermcaps.h"
 
-void	debug_termios(struct termios *term) {
-	printf("- input flags :   [c_iflag] => %lu\n", term->c_iflag);
-	printf("- output flags :  [c_oflag] => %lu\n", term->c_oflag);
-	printf("- control flags : [c_cflag] => %lu\n", term->c_cflag);
-	printf("- local flags :   [c_lflag] => %lu\n", term->c_lflag);
-	printf("- control chars : [c_cc]\n");
-	for (int i = 0; i < NCCS; i++)
-	{
-		ft_putchar('\t');
-		ft_printbit(term->c_cc[i]);
-		printf(" | index : [%d]\t| value : %d\n", i, term->c_cc[i]);
-	}
-	printf("- input speed :   [c_ispeed] => %lu\n", term->c_ispeed);
-	printf("- output speed :  [c_ospeed] => %lu\n", term->c_ospeed);
-	printf("\n");
-}
-
-int		my_outc(int c)
-{
-	return ((int)write(STDIN_FILENO, &c, 1));
-}
-
-void	print_term_size(void)
-{
-	struct winsize size;
-
-	if (ioctl(STDIN_FILENO,TIOCGWINSZ, (char*) &size)<0)
-		printf ("Erreur TIOCGEWINSZ\n");
-
-	printf ("votre terminal comporte %d lignes et %d colones\n",
-			size.ws_row,size.ws_col);
-}
-
-int 	move_up(char buffer[5])
-{
-	if (ft_memcmp(buffer, KEY_UP, 5) == 0)
-	{
-		tputs(tgetstr("le", NULL), 0, my_outc);
-		return (1);
-	}
-	return (0);
-}
-
-int 	move_down(char buffer[5])
-{
-	if (ft_memcmp(buffer, KEY_DOWN, 5) == 0)
-	{
-		tputs(tgetstr("nd", NULL), 0, my_outc);
-		return (1);
-	}
-	return (0);
-}
-
-int 	move_right(char buffer[5])
-{
-	if (ft_memcmp(buffer, KEY_RIGHT, 5) == 0)
-	{
-		tputs(tgetstr("nd", NULL), 0, my_outc);
-		return (1);
-	}
-	return (0);
-}
-
-int 	move_left(char buffer[5])
-{
-	if (ft_memcmp(buffer, KEY_LEFT, 5) == 0)
-	{
-		tputs(tgetstr("le", NULL), 0, my_outc);
-		return (1);
-	}
-	return (0);
-}
-
 int		exec_key(t_term *tc, char buffer[5])
+{
+	int 	i;
+	int 	ret;
+
+	i = 0;
+	while (i < KEY_COUNT)
+	{
+		ret = tc->f[i](tc, buffer);
+		if (ret == 1)
+			return (1);
+		else if (ret == -1)
+			return (-1);
+		i++;
+	}
+	return (0);
+}
+
+t_char	*make_char(char c)
+{
+	t_char	*c_node;
+
+	c_node = (t_char*)ft_memalloc(sizeof(t_char));
+	if (c_node == NULL)
+		error("ft_memalloc", __LINE__);
+	c_node->c = c;
+	return (c_node);
+}
+
+void	update_list_index(t_link *l)
 {
 	int 	i;
 
 	i = 0;
-	while (i < k_count)
+	while (l)
 	{
-		if (tc->f[i](buffer) == 1)
-			return (1);
+		((t_char*)l)->index = i;
+		l = l->next;
 		i++;
 	}
-	return (0);
+}
+
+void	insert_between_char(t_term *tc, t_char *new_node)
+{
+	ft_list_push_before_node(&tc->line.list_str,
+	&tc->line.cur_c_node->link, &new_node->link);
+}
+
+void	write_and_new_line(t_term *tc, char c)
+{
+	t_link	*l;
+	t_char	*c_node;
+	t_char	*c_new_line;
+
+	if (c)
+		;
+	l = tc->line.list_str->head;
+	c_new_line = make_char('\n');
+	while (l)
+	{
+		c_node = (t_char*)l;
+		if (c_node->index % tc->term_size.ws_col == 0)
+			ft_list_push_before_node(&tc->line.list_str, l, &c_new_line->link);
+		l = l->next;
+	}
+	dprintf(fd_debug, "||||\n");
+	tputs(tgetstr("ce", NULL), 0, output_func);
+}
+
+void	write_on_output(t_term *tc, char buffer[5])
+{
+	int 	i;
+	t_char	*c_node;
+	t_char	*cur_c_node;
+
+	i = 0;
+	cur_c_node = tc->line.cur_c_node;
+	while (buffer[i])
+	{
+		c_node = make_char(buffer[i]);
+		if (cur_c_node && cur_c_node->index + 1 < tc->line.list_str->size)
+			insert_between_char(tc, c_node);
+		else
+			ft_list_push_back(&tc->line.list_str, &c_node->link);
+		if (tc->line.cursor_x + 1 >= tc->term_size.ws_col &&
+			cur_c_node->index + 1 < tc->line.list_str->size)
+			write_and_new_line(tc, buffer[i]);
+		else
+			ft_putchar(buffer[i]);
+		update_list_index(tc->line.list_str->head);
+		i++;
+	}
+	ft_list_print(tc->line.list_str->head, debug_print_t_char);
+	dprintf(fd_debug, "\n");
+	update_cursor_pos(tc, 1, 0);
 }
 
 int     read_key(t_term *tc)
 {
 	char    buffer[6];
 	int 	ret;
-	int 	s;
 
 	while (1)
 	{
-		s = read(0, buffer, 5);
-		buffer[s] = '\0';
+		update_term_size(tc);
+		ft_memset(buffer, 0, 6);
+		read(0, buffer, 5);
 		ret = exec_key(tc, buffer);
 		if (ret == 0)
-			ft_putstr(buffer);
+			write_on_output(tc, buffer);
+		if (ret == -1)
+			return (-1);
 	}
 	return (0);
 }
 
-void	error(char *str, int line)
-{
-	ft_putstr_fd("Error : ", 2);
-	ft_putstr_fd(str, 2);
-	ft_putstr_fd("at line : ", 2);
-	ft_putnbr_fd(line, 2);
-	ft_putstr_fd("\n", 2);
-	exit(1);
-}
-
 void	init_key(t_term *tc)
 {
-	tc->f[0] = move_up;
-	tc->f[1] = move_down;
-	tc->f[2] = move_right;
-	tc->f[3] = move_left;
+	tc->f[0] = arrow_up;
+	tc->f[1] = arrow_down;
+	tc->f[2] = arrow_right;
+	tc->f[3] = arrow_left;
+	tc->f[4] = ctrl_d;
 }
 
 void	init_term(t_term *tc)
@@ -139,21 +142,23 @@ void	init_term(t_term *tc)
 	tc->term.c_cc[VTIME] = 0;
 	if (tcsetattr(STDIN_FILENO, TCSANOW, &tc->term) == -1)
 		error("tcsetattr", __LINE__);
-	tputs(tgetstr("im", NULL), 0, my_outc);
+	tputs(tgetstr("im", NULL), 0, output_func);
 }
 
 void	reset_term(t_term *tc)
 {
-	tputs(tgetstr("ei", NULL), 1, my_outc);
+	tputs(tgetstr("ei", NULL), 1, output_func);
 	if (tcsetattr(STDIN_FILENO, TCSANOW, &tc->old_term) == -1)
 		error("tcsetattr", __LINE__);
 }
 
-int		main(void)
+int		main(int ac, char **av)
 {
 	t_term		tc;
 
 	init_term(&tc);
+	if (ac > 1)
+		debug_init_tty(av[1]);
 	//debug_termios(&tc.term);
 
 	read_key(&tc);

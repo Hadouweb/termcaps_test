@@ -6,10 +6,13 @@ add_subdirectory(libft)
 #add_subdirectory(unit_test)
 
 set(SRCS
-    srcs/main.c)
+    srcs/main.c
+    srcs/error.c
+    srcs/key_func.c
+    srcs/debug.c)
+    srcs/util.c)
 
-set(HEADERS
-        includes/mytermcaps.h)
+set(HEADERS includes/mytermcaps.h)
 
 add_executable(termcaps ${SRCS} ${HEADERS})
 
