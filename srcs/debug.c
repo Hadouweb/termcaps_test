@@ -18,6 +18,12 @@ void	debug_termios(struct termios *term)
 	printf("\n");
 }
 
+char	*debug_tgetstr(char *code, void *ptr)
+{
+	dprintf(fd_debug, C_RED("tputs : %s\n"), code);
+	return (tgetstr(code, ptr));
+}
+
 void	debug_term_size(t_term *tc)
 {
 	dprintf (fd_debug, "nb_line: [%d] nb_col: [%d]\n",

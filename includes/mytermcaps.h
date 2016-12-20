@@ -26,6 +26,7 @@ typedef struct 		s_char
 	t_link			link;
 	char 			c;
 	unsigned int 	index;
+	unsigned char	ignore;
 }					t_char;
 
 typedef struct 		s_line
@@ -70,5 +71,7 @@ void	reset_term(t_term *tc);
 
 void	init_key(t_term *tc);
 void	init_term(t_term *tc);
+char	*debug_tgetstr(char *code, void *ptr);
+
 
 #endif

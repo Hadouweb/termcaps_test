@@ -1,20 +1,40 @@
 #include "mytermcaps.h"
 
-void	update_cur_c_node(t_term *tc, int x)
+void	update_cur_c_node(t_term *tc, int x, int y)
 {
-	if (x == -1 && tc->line.cur_c_node) {
-		//PRINT_DEBUG("SWITCH C_NODE 2\n");
-		tc->line.cur_c_node = (t_char *) tc->line.cur_c_node->link.prev;
+	t_link	*l;
+	t_char	*c_node;
+
+	l = &tc->line.cur_c_node->link;
+	if (x == -1 || (x == 0 && y == -1))
+	{
+		l = l->prev;
+		while (l)
+		{
+			c_node = (t_char*)l;
+			if (c_node->ignore == 0)
+				break;
+			l = l->prev;
+		}
+		tc->line.cur_c_node = c_node;
 	}
-	else if (x == 1 && tc->line.cur_c_node) {
-		//PRINT_DEBUG("SWITCH C_NODE 3\n");
-		tc->line.cur_c_node = (t_char *) tc->line.cur_c_node->link.next;
+	else if (x == 1 || (x == 0 && y == 1))
+	{
+		l = l->next;
+		while (l)
+		{
+			c_node = (t_char*)l;
+			if (c_node->ignore == 0)
+				break;
+			l = l->next;
+		}
+		tc->line.cur_c_node = c_node;
 	}
 }
 
 void	update_cursor_pos(t_term *tc, int x, int y)
 {
-	update_cur_c_node(tc, x);
+	update_cur_c_node(tc, x, y);
 	if (x == 1 && tc->line.cursor_x + 1 >= tc->term_size.ws_col)
 	{
 		PRINT_DEBUG("__here 1\n");
@@ -25,7 +45,7 @@ void	update_cursor_pos(t_term *tc, int x, int y)
 	{
 		PRINT_DEBUG("__here 2\n");
 		tc->line.cursor_y -= 1;
-		tc->line.cursor_x = tc->term_size.ws_col - 1;
+		tc->line.cursor_x = tc->term_size.ws_col ;
 	}
 	else if (y == 1)
 	{
@@ -50,33 +70,65 @@ void	update_cursor_pos(t_term *tc, int x, int y)
 	dprintf(fd_debug, "\n");
 }
 
-void	insert_new_char(t_term *tc, t_char *new_node)
-{
-
-	ft_list_push_before_node(&tc->line.list_str,
-	&tc->line.cur_c_node->link, &new_node->link);
-	tc->line.cur_c_node = new_node;
-}
-
-void	write_and_new_line(t_term *tc, char c)
+void	update_new_line(t_term *tc)
 {
 	t_link	*l;
 	t_char	*c_node;
-	t_char	*c_new_line;
+	t_char	*new_line;
 
-	if (c)
-		;
 	l = tc->line.list_str->head;
-	c_new_line = make_char('\n');
 	while (l)
 	{
 		c_node = (t_char*)l;
 		if (c_node->index % tc->term_size.ws_col == 0)
-			ft_list_push_before_node(&tc->line.list_str, l, &c_new_line->link);
+		{
+			new_line = make_char('\n');
+			new_line->ignore = 1;
+			ft_list_push_before_node(&tc->line.list_str, &c_node->link, &new_line->link);
+			//dprintf(fd_debug, "GO NEW_LINE BEFORE %d %c\n", c_node->index, c_node->c);
+		}
 		l = l->next;
 	}
-	dprintf(fd_debug, "||||\n");
-	tputs(tgetstr("ce", NULL), 0, output_func);
+}
+
+void	move_cursor_to_pos(t_term *tc, int x, int y)
+{
+	if (tc)
+		;
+	tputs(tgoto(tgetstr("cm", NULL), x, y), 0, output_func);
+}
+
+void	print_line(t_term *tc, t_link *l)
+{
+	t_char	*c_node;
+
+	if (tc)
+		;
+	tputs(debug_tgetstr("cd", NULL), 0, output_func);
+	while (l)
+	{
+		c_node = (t_char *)l;
+		ft_putchar(c_node->c);
+		l = l->next;
+	}
+	move_cursor_to_pos(tc, tc->line.cursor_x + 1, tc->line.cursor_y);
+	//tputs(debug_tgetstr("nd", NULL), 0, output_func);
+}
+
+void	insert_new_char(t_term *tc, t_char *new_node)
+{
+	ft_list_push_before_node(&tc->line.list_str, &tc->line.cur_c_node->link, &new_node->link);
+	tc->line.cur_c_node = new_node;
+	if (tc->line.list_str->size > tc->term_size.ws_col)
+	{
+		dprintf(fd_debug, "NEW LINE\n");
+		//update_new_line(tc);
+		print_line(tc, &tc->line.cur_c_node->link);
+	} else
+		ft_putchar(new_node->c);
+	//else
+	//{
+	//}
 }
 
 void	write_on_output(t_term *tc, char buffer[5])
@@ -89,9 +141,14 @@ void	write_on_output(t_term *tc, char buffer[5])
 	{
 		c_node = make_char(buffer[i]);
 		insert_new_char(tc, c_node);
-		ft_putchar(buffer[i]);
 		update_list_index(tc->line.list_str->head);
-		update_cursor_pos(tc, 1, 0);
+		if ((tc->line.cursor_x + 1) >= tc->term_size.ws_col)
+		{
+			tputs(debug_tgetstr("do", NULL), 0, output_func);
+			update_cursor_pos(tc, 0, 1);
+		}
+		else
+			update_cursor_pos(tc, 1, 0);
 		i++;
 	}
 }

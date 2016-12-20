@@ -55,7 +55,7 @@ int		exec_key(t_term *tc, char buffer[5])
 
 void	reset_term(t_term *tc)
 {
-	tputs(tgetstr("ei", NULL), 1, output_func);
+	tputs(debug_tgetstr("ei", NULL), 1, output_func);
 	if (tcsetattr(STDIN_FILENO, TCSANOW, &tc->old_term) == -1)
 		error("tcsetattr", __LINE__);
 }
