@@ -63,5 +63,12 @@ void	debug_print_t_char(void *content);
 void	update_term_size(t_term *tc);
 int		output_func(int c);
 void	update_cursor_pos(t_term *tc, int x, int y);
+t_char	*make_char(char c);
+void	update_list_index(t_link *l);
+int		exec_key(t_term *tc, char buffer[5]);
+void	reset_term(t_term *tc);
+
+void	init_key(t_term *tc);
+void	init_term(t_term *tc);
 
 #endif

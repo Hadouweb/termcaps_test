@@ -1,51 +1,61 @@
 #include "mytermcaps.h"
 
-int		exec_key(t_term *tc, char buffer[5])
+void	update_cur_c_node(t_term *tc, int x)
 {
-	int 	i;
-	int 	ret;
-
-	i = 0;
-	while (i < KEY_COUNT)
-	{
-		ret = tc->f[i](tc, buffer);
-		if (ret == 1)
-			return (1);
-		else if (ret == -1)
-			return (-1);
-		i++;
+	if (x == -1 && tc->line.cur_c_node) {
+		//PRINT_DEBUG("SWITCH C_NODE 2\n");
+		tc->line.cur_c_node = (t_char *) tc->line.cur_c_node->link.prev;
 	}
-	return (0);
-}
-
-t_char	*make_char(char c)
-{
-	t_char	*c_node;
-
-	c_node = (t_char*)ft_memalloc(sizeof(t_char));
-	if (c_node == NULL)
-		error("ft_memalloc", __LINE__);
-	c_node->c = c;
-	return (c_node);
-}
-
-void	update_list_index(t_link *l)
-{
-	int 	i;
-
-	i = 0;
-	while (l)
-	{
-		((t_char*)l)->index = i;
-		l = l->next;
-		i++;
+	else if (x == 1 && tc->line.cur_c_node) {
+		//PRINT_DEBUG("SWITCH C_NODE 3\n");
+		tc->line.cur_c_node = (t_char *) tc->line.cur_c_node->link.next;
 	}
 }
 
-void	insert_between_char(t_term *tc, t_char *new_node)
+void	update_cursor_pos(t_term *tc, int x, int y)
 {
+	update_cur_c_node(tc, x);
+	if (x == 1 && tc->line.cursor_x + 1 >= tc->term_size.ws_col)
+	{
+		PRINT_DEBUG("__here 1\n");
+		tc->line.cursor_y += 1;
+		tc->line.cursor_x = 0;
+	}
+	else if (x == -1 && tc->line.cursor_x == 0 && tc->line.cursor_y > 0)
+	{
+		PRINT_DEBUG("__here 2\n");
+		tc->line.cursor_y -= 1;
+		tc->line.cursor_x = tc->term_size.ws_col - 1;
+	}
+	else if (y == 1)
+	{
+		PRINT_DEBUG("__here 3\n");
+		tc->line.cursor_y += 1;
+		tc->line.cursor_x = 0;
+	}
+	else if (y == -1 && tc->line.cursor_y > 0)
+	{
+		PRINT_DEBUG("__here 4\n");
+		tc->line.cursor_y -= 1;
+		tc->line.cursor_x = tc->term_size.ws_col - 1;
+	}
+	else
+	{
+		PRINT_DEBUG("__here 10\n");
+		tc->line.cursor_x += x;
+	}
+	ft_list_print(tc->line.list_str->head, debug_print_t_char);
+	debug_print_cursor_pos(tc);
+	debug_term_size(tc);
+	dprintf(fd_debug, "\n");
+}
+
+void	insert_new_char(t_term *tc, t_char *new_node)
+{
+
 	ft_list_push_before_node(&tc->line.list_str,
 	&tc->line.cur_c_node->link, &new_node->link);
+	tc->line.cur_c_node = new_node;
 }
 
 void	write_and_new_line(t_term *tc, char c)
@@ -73,34 +83,34 @@ void	write_on_output(t_term *tc, char buffer[5])
 {
 	int 	i;
 	t_char	*c_node;
-	t_char	*cur_c_node;
 
 	i = 0;
-	cur_c_node = tc->line.cur_c_node;
 	while (buffer[i])
 	{
 		c_node = make_char(buffer[i]);
-		if (cur_c_node && cur_c_node->index + 1 < tc->line.list_str->size)
-			insert_between_char(tc, c_node);
-		else
-			ft_list_push_back(&tc->line.list_str, &c_node->link);
-		if (tc->line.cursor_x + 1 >= tc->term_size.ws_col &&
-			cur_c_node->index + 1 < tc->line.list_str->size)
-			write_and_new_line(tc, buffer[i]);
-		else
-			ft_putchar(buffer[i]);
+		insert_new_char(tc, c_node);
+		ft_putchar(buffer[i]);
 		update_list_index(tc->line.list_str->head);
+		update_cursor_pos(tc, 1, 0);
 		i++;
 	}
-	ft_list_print(tc->line.list_str->head, debug_print_t_char);
-	dprintf(fd_debug, "\n");
-	update_cursor_pos(tc, 1, 0);
+}
+
+void	init_list_str(t_term *tc)
+{
+	t_char	*cursor_end;
+
+	cursor_end = make_char('\0');
+	ft_list_push_back(&tc->line.list_str, &cursor_end->link);
+	tc->line.cur_c_node = cursor_end;
 }
 
 int     read_key(t_term *tc)
 {
 	char    buffer[6];
 	int 	ret;
+
+	init_list_str(tc);
 
 	while (1)
 	{
@@ -114,42 +124,6 @@ int     read_key(t_term *tc)
 			return (-1);
 	}
 	return (0);
-}
-
-void	init_key(t_term *tc)
-{
-	tc->f[0] = arrow_up;
-	tc->f[1] = arrow_down;
-	tc->f[2] = arrow_right;
-	tc->f[3] = arrow_left;
-	tc->f[4] = ctrl_d;
-}
-
-void	init_term(t_term *tc)
-{
-	ft_bzero(tc, sizeof(t_term));
-	init_key(tc);
-	if ((tc->name_term = getenv("TERM")) == NULL)
-		error("getenv", __LINE__);
-	if (tgetent(NULL,  tc->name_term) == -1)
-		error("tgetent", __LINE__);
-	if (tcgetattr(STDIN_FILENO, &tc->term) == -1)
-		error("tcgetattr", __LINE__);
-	ft_memcpy(&tc->old_term, &tc->term, sizeof(struct termios));
-	tc->term.c_lflag &= ~(ICANON);
-	tc->term.c_lflag &= ~(ECHO);
-	tc->term.c_cc[VMIN] = 1;
-	tc->term.c_cc[VTIME] = 0;
-	if (tcsetattr(STDIN_FILENO, TCSANOW, &tc->term) == -1)
-		error("tcsetattr", __LINE__);
-	tputs(tgetstr("im", NULL), 0, output_func);
-}
-
-void	reset_term(t_term *tc)
-{
-	tputs(tgetstr("ei", NULL), 1, output_func);
-	if (tcsetattr(STDIN_FILENO, TCSANOW, &tc->old_term) == -1)
-		error("tcsetattr", __LINE__);
 }
 
 int		main(int ac, char **av)

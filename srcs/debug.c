@@ -36,11 +36,10 @@ void	debug_init_tty(char *tty_name)
 
 void	debug_print_cursor_pos(t_term *tc)
 {
-	dprintf(fd_debug, C_YELLOW("\nx: [%d] y: [%d] cur_index: [%d] cur_char [%c]\n"),
-	tc->line.cursor_x, tc->line.cursor_y,
-	tc->line.cur_c_node->index, tc->line.cur_c_node->c);
-	//dprintf(tc->debug.fd, "str: [%s] size: [%d]\n",
-	// tc->line.str, tc->line.size);
+	dprintf(fd_debug,
+			C_YELLOW("\nx: [%d] y: [%d] cur_index_node: [%d] cur_char [%c]\n"),
+			tc->line.cursor_x, tc->line.cursor_y,
+			tc->line.cur_c_node->index, tc->line.cur_c_node->c);
 }
 
 void	debug_print_t_char(void *content)

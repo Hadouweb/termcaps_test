@@ -17,6 +17,7 @@ SRC = 	$(SRCPATH)/main.c\
     	$(SRCPATH)/debug.c\
     	$(SRCPATH)/key_func.c\
     	$(SRCPATH)/util.c\
+    	$(SRCPATH)/init.c\
 
 OBJ = $(SRC:.c=.o)
 
