@@ -119,6 +119,7 @@ void	print_line(t_term *tc, t_link *l)
 		update_cursor_pos(tc, 1, 0);
 		if (tc->line.cursor_x == 0 && tc->line.cursor_y > 0)
 		{
+			tputs(debug_tgetstr("cr", NULL), 0, output_func);
 			tputs(debug_tgetstr("do", NULL), 0, output_func);
 		}
 		//sleep(1);
@@ -136,6 +137,7 @@ void	insert_new_char(t_term *tc, t_char *new_node)
 	update_cursor_pos(tc, 1, 0);
 	if (tc->line.cursor_x == 0 && tc->line.cursor_y > 0)
 	{
+		tputs(debug_tgetstr("cr", NULL), 0, output_func);
 		tputs(debug_tgetstr("do", NULL), 0, output_func);
 	}
 	if (tc->line.list_str->size > tc->term_size.ws_col &&
