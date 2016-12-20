@@ -51,6 +51,7 @@ int 	arrow_up(t_term *tc, char buffer[5]);
 int 	arrow_down(t_term *tc, char buffer[5]);
 int 	arrow_right(t_term *tc, char buffer[5]);
 int 	arrow_left(t_term *tc, char buffer[5]);
+void	move_left(t_term *tc);
 int 	ctrl_d(t_term *tc, char buffer[5]);
 
 void	error(char *str, int line);
