@@ -9,6 +9,16 @@ void	init_key(t_term *tc)
 	tc->f[4] = ctrl_d;
 }
 
+void	init_list_str(t_term *tc)
+{
+	t_char	*cursor_end;
+
+	cursor_end = make_char('\0');
+	ft_list_push_back(&tc->line.list_str, &cursor_end->link);
+	update_list_index(tc->line.list_str->head);
+	tc->line.cur_c_node = cursor_end;
+}
+
 void	init_term(t_term *tc)
 {
 	ft_bzero(tc, sizeof(t_term));
@@ -26,5 +36,4 @@ void	init_term(t_term *tc)
 	tc->term.c_cc[VTIME] = 0;
 	if (tcsetattr(STDIN_FILENO, TCSANOW, &tc->term) == -1)
 		error("tcsetattr", __LINE__);
-	//tputs(debug_tgetstr("im", NULL), 0, output_func);
 }

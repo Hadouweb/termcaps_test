@@ -11,6 +11,9 @@ set(SRCS
     srcs/key_func.c
     srcs/debug.c
     srcs/init.c
+    srcs/move.c
+    srcs/print.c
+    srcs/update_cursor.c
     srcs/util.c)
 
 set(HEADERS includes/mytermcaps.h)

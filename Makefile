@@ -18,6 +18,9 @@ SRC = 	$(SRCPATH)/main.c\
     	$(SRCPATH)/key_func.c\
     	$(SRCPATH)/util.c\
     	$(SRCPATH)/init.c\
+    	$(SRCPATH)/move.c\
+    	$(SRCPATH)/print.c\
+    	$(SRCPATH)/update_cursor.c\
 
 OBJ = $(SRC:.c=.o)
 

@@ -46,7 +46,6 @@ void	debug_print_cursor_pos(t_term *tc)
 			C_YELLOW("\nx: [%d] y: [%d] cur_index_node: [%d] cur_char [%c]\n"),
 			tc->line.cursor_x, tc->line.cursor_y,
 			tc->line.cur_c_node->index, tc->line.cur_c_node->c);
-	//dprintf(fd_debug, C_YELLOW("\nx: [%d] y: [%d]\n"), tc->line.cursor_x, tc->line.cursor_y);
 }
 
 void	debug_print_t_char(void *content)

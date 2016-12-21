@@ -46,33 +46,64 @@ typedef struct 		s_term
 	struct winsize	term_size;
 }					t_term;
 
+/*
+ * key_func.c
+ */
 int 	arrow_up(t_term *tc, char buffer[5]);
 int 	arrow_down(t_term *tc, char buffer[5]);
 int 	arrow_right(t_term *tc, char buffer[5]);
-void	move_right(t_term *tc);
 int 	arrow_left(t_term *tc, char buffer[5]);
-void	move_left(t_term *tc);
 int 	ctrl_d(t_term *tc, char buffer[5]);
 
+/*
+ * error.c
+ */
 void	error(char *str, int line);
 
+/*
+ * debug.c
+ */
 void	debug_termios(struct termios *term);
 void	debug_term_size(t_term *tc);
 void	debug_init_tty(char *tty_name);
 void	debug_print_cursor_pos(t_term *tc);
 void	debug_print_t_char(void *content);
+char	*debug_tgetstr(char *code, void *ptr);
 
+/*
+ * update_cursor.c
+ */
 void	update_term_size(t_term *tc);
+void	update_cursor_pos(t_term *tc, int x);
+void	replace_cursor(t_term *tc, t_char *orig_c_node);
+
+/*
+ * util.c
+ */
 int		output_func(int c);
-void	update_cursor_pos(t_term *tc, int x, int y);
 t_char	*make_char(char c);
 void	update_list_index(t_link *l);
 int		exec_key(t_term *tc, char buffer[5]);
 void	reset_term(t_term *tc);
 
+/*
+ * init.c
+ */
 void	init_key(t_term *tc);
 void	init_term(t_term *tc);
-char	*debug_tgetstr(char *code, void *ptr);
+void	init_list_str(t_term *tc);
 
+/*
+ * move.c
+ */
+void	move_left(t_term *tc);
+void	move_right(t_term *tc);
+
+/*
+ * print.c
+ */
+void	print_line(t_term *tc);
+void	insert_before_char(t_term *tc, t_char *c_node);
+void	write_on_output(t_term *tc, char buffer[5]);
 
 #endif
