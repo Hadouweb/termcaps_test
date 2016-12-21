@@ -26,5 +26,5 @@ void	init_term(t_term *tc)
 	tc->term.c_cc[VTIME] = 0;
 	if (tcsetattr(STDIN_FILENO, TCSANOW, &tc->term) == -1)
 		error("tcsetattr", __LINE__);
-	tputs(debug_tgetstr("im", NULL), 0, output_func);
+	//tputs(debug_tgetstr("im", NULL), 0, output_func);
 }

@@ -26,7 +26,6 @@ typedef struct 		s_char
 	t_link			link;
 	char 			c;
 	unsigned int 	index;
-	unsigned char	ignore;
 }					t_char;
 
 typedef struct 		s_line
@@ -50,7 +49,9 @@ typedef struct 		s_term
 int 	arrow_up(t_term *tc, char buffer[5]);
 int 	arrow_down(t_term *tc, char buffer[5]);
 int 	arrow_right(t_term *tc, char buffer[5]);
+void	move_right(t_term *tc);
 int 	arrow_left(t_term *tc, char buffer[5]);
+void	move_left(t_term *tc);
 int 	ctrl_d(t_term *tc, char buffer[5]);
 
 void	error(char *str, int line);

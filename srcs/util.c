@@ -2,7 +2,7 @@
 
 int		output_func(int c)
 {
-	return ((int)write(STDIN_FILENO, &c, 1));
+	return (write(2, &c, 1));
 }
 
 void	update_term_size(t_term *tc)
