@@ -41,7 +41,7 @@ void	write_on_output(t_term *tc, char buffer[5])
 	i = 0;
 	while (buffer[i])
 	{
-		c_node = make_char(buffer[i]);
+		c_node = make_char(buffer[0]);
 		if (tc->line.cursor_x + 1 >= tc->line.list_str->size)
 		{
 			ft_list_push_before_node(&tc->line.list_str,
